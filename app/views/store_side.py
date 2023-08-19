@@ -1,5 +1,6 @@
 import streamlit as st
-from db_utils import authenticate_store,register_store
+from db_utils import authenticate_store,register_store,check_store_exists
+from config import ADMIN_ID,ADMIN_PASSWORD
 
 
 # ログイン画面
@@ -10,7 +11,7 @@ def display_login_page():
     password = st.text_input("パスワード", type='password')
 
     if st.button("ログイン"):
-        if store_id == "田村" and password == "admin":
+        if store_id == ADMIN_ID and password == ADMIN_PASSWORD:
             st.session_state.page = 'store_registration'
             st.experimental_rerun()
         elif authenticate_store(store_id, password):
@@ -30,6 +31,10 @@ def display_store_register_page():
     phone_number = st.text_input("電話番号")
     email = st.text_input("メールアドレス")
     address = st.text_input("住所")
+    if 'error_message' in st.session_state and st.session_state.error_message:
+        st.error(st.session_state.error_message)
+        del st.session_state.error_message 
+
     if st.button("お店を登録"):
         if not store_id or not store_name or not password or not phone_number or not email or not address:
             st.session_state.error_message = "すべての項目を入力してください。"
@@ -37,6 +42,8 @@ def display_store_register_page():
             st.session_state.error_message = "パスワードが一致しません。"
         elif "@" not in email:
             st.session_state.error_message = "有効なメールアドレスを入力してください。"
+        elif check_store_exists(store_id):
+            st.session_state.error_message = "idが存在しています"
         else:
             register_store(store_id,store_name, password, phone_number, email,address)  
             st.session_state.page = 'login'

@@ -1,4 +1,4 @@
-from db_utils import init_db
+from db_utils import init_db,check_store_exists
 from views.client_side import display_login_page as client_login_page  ,display_register_page ,display_ticket_issue_page,display_ticket_show_page,display_main_page,display_confirmation_page
 from views.store_side import display_login_page as store_login_page , display_store_register_page,display_store_dashboard_page
 import streamlit as st
@@ -8,7 +8,6 @@ import pandas as pd
 # セッション状態の初期設定
 if 'page' not in st.session_state:
     st.session_state.page = 'login' # 最初に開くページの設定
-    st.session_state.store_id = 1  # デフォルトの店のIDを設定
     st.session_state.role = 'customer'  # Default role
 
 def main():

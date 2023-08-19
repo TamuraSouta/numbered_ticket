@@ -161,7 +161,8 @@ def display_ticket_show_page():
                 'lon': [coordinates[0]]
             }, index=[1])
             ## データを使用して地図を作成する
-            st.map(data)
+            if data:
+                st.map(data)
 
             if st.button("戻る"):
                 st.session_state.page = 'main'

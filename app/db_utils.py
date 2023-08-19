@@ -112,3 +112,11 @@ def check_store_exists(store_id):
         cur.execute("SELECT id FROM stores WHERE store_id = ?", (store_id,))
         result = cur.fetchone()
         return True if result else False
+    
+# IDがデータベースに存在するか確認
+def check_store_id_exists(store_id):
+    with sqlite3.connect('users.db') as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT store_id FROM stores WHERE store_id = ?", (store_id,))
+        result = cur.fetchone()
+        return True if result else False
