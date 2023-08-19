@@ -1,0 +1,33 @@
+import qrcode
+
+def generate_qr(shop_id):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    url = f"http://your_streamlit_app_url/?shop_id={shop_id}"  # このURLは実際のStreamlitアプリのURLに置き換えてください
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill='black', back_color='white')
+    return img
+
+
+2. QRコードの読み取り機能
+QRコードの生成は、多くのライブラリが利用できますが、この例ではqrcodeライブラリを使用します。まず、インストールします：
+
+css
+Copy code
+pip install qrcode[pil]
+
+url
+http://localhost:8502/?store_id=2
+
+直したいところ
+
+各お店ごとに整理券を取得したい
+他のお店の整理券が反弊されてしまっている
+
+お店のマップの上にgooglemapの地図を表示したい
+
