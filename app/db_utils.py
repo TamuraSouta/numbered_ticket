@@ -22,13 +22,14 @@ def init_db():
         conn.execute("""
         CREATE TABLE IF NOT EXISTS stores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,  
+            store_name TEXT,
+            password TEXT,
             phone_number TEXT,
+            email TEXT,
             address TEXT
         )""")
         conn.commit()
         try:
-            conn.execute("ALTER TABLE stores ADD COLUMN name TEXT")
             conn.commit()
         except sqlite3.OperationalError as e:
             # カラムが既に存在する場合はこのエラーを無視
@@ -76,7 +77,6 @@ def get_previous_ticket(username, store_id):
         ticket_info = cur.fetchone()
         return ticket_info
 
-
 #　店情報を取得
 def get_store_info(store_id):
     with sqlite3.connect('users.db') as conn:
@@ -84,18 +84,33 @@ def get_store_info(store_id):
         cur.execute("SELECT name, phone_number, address FROM stores WHERE id = ?", (store_id,))
         store_info = cur.fetchone()
         return store_info
-    
-# 店登録
-def register_store(name, phone_number, address):  # 引数としてnameを追加
+
+#　店ログイン照会
+def authenticate_store(store_id, password):
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
     with sqlite3.connect('users.db') as conn:
-        conn.execute("INSERT INTO stores (name, phone_number, address) VALUES (?, ?, ?)", (name, phone_number, address))
+        cur = conn.cursor()
+        cur.execute("SELECT password FROM stores WHERE id = ?", (store_id,))
+        stored_password = cur.fetchone()
+        if stored_password and stored_password[0] == hashed_password:
+            return True
+        else:
+            return False
+        
+# 店登録
+def register_store(store_name, password, phone_number, email, address):  
+    with sqlite3.connect('users.db') as conn:
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()  # パスワードをハッシュ化
+        conn.execute("INSERT INTO stores (store_name, password, phone_number, email, address) VALUES (?, ?, ?, ?, ?)", (store_name, hashed_password, phone_number, email, address))
         conn.commit()
         
         # 追加したお店のIDを取得
         cur = conn.cursor()
-        cur.execute("SELECT id FROM stores WHERE name = ? AND phone_number = ? AND address = ? ORDER BY id DESC LIMIT 1", (name, phone_number, address))
+        cur.execute("SELECT id FROM stores WHERE store_name = ? AND phone_number = ? AND email = ? AND address = ? ORDER BY id DESC LIMIT 1", 
+                    (store_name, phone_number, email, address))
         store_id = cur.fetchone()
         return store_id[0]
+
     
 # 店が存在するか確認
 def check_store_exists(store_id):

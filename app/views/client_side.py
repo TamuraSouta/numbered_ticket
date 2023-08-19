@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import urllib
 
-from db_utils import authenticate_user,add_user,register_store,get_store_info,issue_ticket,get_previous_ticket,check_store_exists
+from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists
 from config import GSI_API_BASE_URL
 
 
@@ -18,7 +18,7 @@ def display_login_page():
         return  # 以降のログイン処理を中止
     
     st.subheader("ログイン")
-    username = st.text_input("ユーザー名")
+    username = st.text_input("ユーザー名", key="client_username")
     password = st.text_input("パスワード", type='password')
         
     if st.button("ログイン"):
@@ -32,10 +32,6 @@ def display_login_page():
     # 新規登録画面に遷移
     if st.button("新規登録画面へ"):
         st.session_state.page = 'register'
-        st.experimental_rerun()
-    # お店登録画面に遷移
-    if st.button("お店の登録"):  
-        st.session_state.page = 'store_register' 
         st.experimental_rerun()
 
 if 'error_message' not in st.session_state:
@@ -105,22 +101,6 @@ def display_confirmation_page():
         st.session_state.page = 'register'
         st.experimental_rerun()
 
-    
-
-# お店登録画面
-def display_store_register_page():
-    st.subheader("お店の登録")
-    
-    name = st.text_input("お店の名前")
-    phone_number = st.text_input("電話番号")
-    address = st.text_input("住所")
-    
-    if st.button("お店を登録"):
-        store_id = register_store(name, phone_number, address)  # nameを引数として追加
-        st.success(f"お店が正常に登録されました。お店のIDは{store_id}です。")
-        if st.button("戻る"):
-            st.session_state.page = 'login'
-            st.experimental_rerun() 
         
 #メイン画面
 def display_main_page():
