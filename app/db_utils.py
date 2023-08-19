@@ -36,6 +36,10 @@ def init_db():
             # カラムが既に存在する場合はこのエラーを無視
             pass
 
+##################################
+# 客側
+##################################
+
 # ユーザーの追加
 def add_user(username, password, gender, age, email):  
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
@@ -83,6 +87,18 @@ def cancel_ticket(username, store_id):
     with sqlite3.connect('users.db') as conn:
         conn.execute("DELETE FROM tickets WHERE username = ? AND store_id = ?", (username, store_id))
         conn.commit()
+
+# 整理券の取得情報の確認   
+def user_has_ticket(username):
+    with sqlite3.connect('users.db') as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM tickets WHERE username = ?", (username,))
+        result = cur.fetchone()
+        return True if result else False
+
+##################################
+# 店側
+##################################
 
 #　店情報を取得
 def get_store_info(store_id):

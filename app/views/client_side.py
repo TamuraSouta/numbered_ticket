@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import urllib 
 
-from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists,cancel_ticket
+from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists,cancel_ticket,user_has_ticket
 from config import GSI_API_BASE_URL
 
 st.session_state.OPEN_STATUS = False
@@ -109,6 +109,10 @@ def display_confirmation_page():
 #メイン画面
 def display_main_page():
     st.subheader("メイン画面")
+    if 'error_message' in st.session_state and st.session_state.error_message:
+        st.error(st.session_state.error_message)
+        del st.session_state.error_message  
+
     
     store_info = get_store_info(st.session_state.store_id)
     if store_info:
@@ -124,18 +128,25 @@ def display_main_page():
 #発行券発行画面
 def display_ticket_issue_page():
     st.subheader("整理券発行")
-    
+
+
     num_people = st.number_input("人数を入力してください", min_value=1, max_value=100, value=1)
     if st.button("整理券を発行"):
-        ticket_num, issued_num_people = issue_ticket(st.session_state.username, num_people, st.session_state.store_id)  # store_idを渡す
-        st.session_state.ticket_num = ticket_num
-        st.session_state.issued_num_people = issued_num_people
-
-        if num_people > 100:
-            st.warning("人数は100までです。")
+        if user_has_ticket(st.session_state.username):
+            st.session_state.error_message = "すでに他の店舗で整理券を取得しています。1つのIDで複数店舗での整理券取得はできません。"
+            st.session_state.page = 'main'
+            st.experimental_rerun()
             return
-        st.session_state.page = 'show_ticket'
-        st.experimental_rerun()
+        else:
+            ticket_num, issued_num_people = issue_ticket(st.session_state.username, num_people, st.session_state.store_id)  # store_idを渡す
+            st.session_state.ticket_num = ticket_num
+            st.session_state.issued_num_people = issued_num_people
+
+            if num_people > 100:
+                st.warning("人数は100までです。")
+                return
+            st.session_state.page = 'show_ticket'
+            st.experimental_rerun()
     
     if st.button("戻る"):
         st.session_state.page = 'main'
@@ -181,7 +192,7 @@ def display_ticket_show_page():
                 st.session_state.page = 'main'
                 st.experimental_rerun() 
     elif st.session_state.OPEN_STATUS :
-        st.write("まだ整理券は発行されていまaせん。")
+        st.write("まだ整理券は発行されていまません。")
         if st.button("新規発行"):
             st.session_state.page = 'issue_ticket'
             st.experimental_rerun()
