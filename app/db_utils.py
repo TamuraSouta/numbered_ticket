@@ -109,6 +109,6 @@ def register_store(store_id, store_name, password, phone_number, email, address)
 def check_store_exists(store_id):
     with sqlite3.connect('users.db') as conn:
         cur = conn.cursor()
-        cur.execute("SELECT id FROM stores WHERE id = ?", (store_id,))
+        cur.execute("SELECT id FROM stores WHERE store_id = ?", (store_id,))
         result = cur.fetchone()
         return True if result else False

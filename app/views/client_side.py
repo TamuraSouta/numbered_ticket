@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
-import urllib
+import urllib 
 
 from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists
 from config import GSI_API_BASE_URL
@@ -12,8 +12,7 @@ def display_login_page():
     # URLからstore_idを取得
     params = st.experimental_get_query_params()
     store_id = params.get("store_id", [None])[0]
-
-    if store_id and not check_store_exists(store_id):
+    if not store_id or not check_store_exists(store_id):
         st.warning("そのURLは有効ではありません。")
         return  # 以降のログイン処理を中止
     
