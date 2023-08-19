@@ -6,20 +6,25 @@ import urllib
 from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists
 from config import GSI_API_BASE_URL
 
+st.session_state.OPEN_STATUS = False
+
 
 #ログイン画面
 def display_login_page():
     # URLからstore_idを取得
     params = st.experimental_get_query_params()
     store_id = params.get("store_id", [None])[0]
-    if not store_id or not check_store_exists(store_id):
-        st.warning("そのURLは有効ではありません。")
-        return  # 以降のログイン処理を中止
+    if check_store_exists(store_id):
+        st.session_state.OPEN_STATUS = True # 整理券を取得できる
+    else:
+        st.warning("このurlでは整理券を発行することはできません")
     
+    if 'error_message' in st.session_state and st.session_state.error_message:
+        st.error(st.session_state.error_message)
+        del st.session_state.error_message 
     st.subheader("ログイン")
     username = st.text_input("ユーザー名", key="client_username")
     password = st.text_input("パスワード", type='password')
-        
     if st.button("ログイン"):
         if authenticate_user(username, password):
             st.session_state.username = username 
@@ -108,13 +113,13 @@ def display_main_page():
     store_info = get_store_info(st.session_state.store_id)
     if store_info:
         st.write(f"お店の名前: {store_info[0]}")  # お店の名前を表示
-
     if st.button("発行番号の確認"):
         st.session_state.page = 'show_ticket'
         st.experimental_rerun()
-    if st.button("新規発行"):
-        st.session_state.page = 'issue_ticket'
-        st.experimental_rerun()
+    if st.session_state.OPEN_STATUS:
+        if st.button("新規発行"):
+            st.session_state.page = 'issue_ticket'
+            st.experimental_rerun()
 
 #発行券発行画面
 def display_ticket_issue_page():
@@ -142,14 +147,16 @@ def display_ticket_show_page():
     st.subheader("発行された整理券の情報")
     ticket_info = get_previous_ticket(st.session_state.username, st.session_state.store_id)  # store_idを追加
     if ticket_info:
+
         st.write(f"整理券番号: {ticket_info[0]}")
         st.write(f"人数: {ticket_info[1]}")
         
-        # お店の情報を取得
+        # 店の情報を表示
         store_info = get_store_info(ticket_info[2])
         if store_info:
+            phone_number = store_info[1]
             address = store_info[2]
-            st.write(f"電話番号: {store_info[1]}")
+            st.write(f"電話番号: {phone_number}")
             st.write(f"住所: {address}")
             
 
@@ -161,13 +168,12 @@ def display_ticket_show_page():
                 'lon': [coordinates[0]]
             }, index=[1])
             ## データを使用して地図を作成する
-            if data:
-                st.map(data)
+            st.map(data)
 
             if st.button("戻る"):
                 st.session_state.page = 'main'
                 st.experimental_rerun() 
-    else:
+    elif st.session_state.OPEN_STATUS :
         st.write("まだ整理券は発行されていまaせん。")
         if st.button("新規発行"):
             st.session_state.page = 'issue_ticket'

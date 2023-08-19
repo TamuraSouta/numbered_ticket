@@ -22,6 +22,7 @@ def init_db():
         conn.execute("""
         CREATE TABLE IF NOT EXISTS stores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            store_id TEXT,
             store_name TEXT,
             password TEXT,
             phone_number TEXT,
@@ -30,7 +31,6 @@ def init_db():
         )""")
         conn.commit()
         try:
-            conn.execute("""ALTER TABLE stores ADD COLUMN store_id TEXT""")
             conn.commit()
         except sqlite3.OperationalError as e:
             # カラムが既に存在する場合はこのエラーを無視
@@ -82,7 +82,8 @@ def get_previous_ticket(username, store_id):
 def get_store_info(store_id):
     with sqlite3.connect('users.db') as conn:
         cur = conn.cursor()
-        cur.execute("SELECT name, phone_number, address FROM stores WHERE id = ?", (store_id,))
+        
+        cur.execute("SELECT store_name, phone_number, address FROM stores WHERE id = ?", (store_id,))
         store_info = cur.fetchone()
         return store_info
 
