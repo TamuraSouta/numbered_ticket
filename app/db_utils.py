@@ -78,6 +78,12 @@ def get_previous_ticket(username, store_id):
         ticket_info = cur.fetchone()
         return ticket_info
 
+# 整理券のキャンセル
+def cancel_ticket(username, store_id):
+    with sqlite3.connect('users.db') as conn:
+        conn.execute("DELETE FROM tickets WHERE username = ? AND store_id = ?", (username, store_id))
+        conn.commit()
+
 #　店情報を取得
 def get_store_info(store_id):
     with sqlite3.connect('users.db') as conn:
@@ -121,3 +127,6 @@ def check_store_id_exists(store_id):
         cur.execute("SELECT store_id FROM stores WHERE store_id = ?", (store_id,))
         result = cur.fetchone()
         return True if result else False
+
+
+

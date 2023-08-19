@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import urllib 
 
-from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists
+from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists,cancel_ticket
 from config import GSI_API_BASE_URL
 
 st.session_state.OPEN_STATUS = False
@@ -136,6 +136,7 @@ def display_ticket_issue_page():
             return
         st.session_state.page = 'show_ticket'
         st.experimental_rerun()
+    
     if st.button("戻る"):
         st.session_state.page = 'main'
         st.experimental_rerun() 
@@ -167,9 +168,15 @@ def display_ticket_show_page():
                 'lat': [coordinates[1]],  # 緯度と経度の順番を修正
                 'lon': [coordinates[0]]
             }, index=[1])
-            ## データを使用して地図を作成する
+            # データを使用して地図を作成する
             st.map(data)
 
+            # キャンセル機能の実装
+            if st.button("整理券のキャンセル"):
+                cancel_ticket(st.session_state.username, st.session_state.store_id)  # 整理券をキャンセル
+                st.session_state.page = 'main'
+                st.experimental_rerun() 
+            
             if st.button("戻る"):
                 st.session_state.page = 'main'
                 st.experimental_rerun() 
