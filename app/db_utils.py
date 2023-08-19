@@ -30,6 +30,7 @@ def init_db():
         )""")
         conn.commit()
         try:
+            conn.execute("""ALTER TABLE stores ADD COLUMN store_id TEXT""")
             conn.commit()
         except sqlite3.OperationalError as e:
             # カラムが既に存在する場合はこのエラーを無視
@@ -90,7 +91,7 @@ def authenticate_store(store_id, password):
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
     with sqlite3.connect('users.db') as conn:
         cur = conn.cursor()
-        cur.execute("SELECT password FROM stores WHERE id = ?", (store_id,))
+        cur.execute("SELECT password FROM stores WHERE store_id = ?", (store_id,))
         stored_password = cur.fetchone()
         if stored_password and stored_password[0] == hashed_password:
             return True
@@ -98,19 +99,11 @@ def authenticate_store(store_id, password):
             return False
         
 # 店登録
-def register_store(store_name, password, phone_number, email, address):  
+def register_store(store_id, store_name, password, phone_number, email, address):  
     with sqlite3.connect('users.db') as conn:
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()  # パスワードをハッシュ化
-        conn.execute("INSERT INTO stores (store_name, password, phone_number, email, address) VALUES (?, ?, ?, ?, ?)", (store_name, hashed_password, phone_number, email, address))
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        conn.execute("INSERT INTO stores (store_id, store_name, password, phone_number, email, address) VALUES (?, ?, ?, ?, ?, ?)", (store_id, store_name, hashed_password, phone_number, email, address))
         conn.commit()
-        
-        # 追加したお店のIDを取得
-        cur = conn.cursor()
-        cur.execute("SELECT id FROM stores WHERE store_name = ? AND phone_number = ? AND email = ? AND address = ? ORDER BY id DESC LIMIT 1", 
-                    (store_name, phone_number, email, address))
-        store_id = cur.fetchone()
-        return store_id[0]
-
     
 # 店が存在するか確認
 def check_store_exists(store_id):
