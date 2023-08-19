@@ -1,4 +1,0 @@
-params = st.experimental_get_query_params()
-    store_id_from_url = params.get("store_id")
-    if store_id_from_url:
-        st.session_state.store_id = int(store_id_from_url[0])

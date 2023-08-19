@@ -1,10 +1,9 @@
 from db_utils import init_db
-from views import display_login_page ,display_register_page ,display_ticket_issue_page,display_ticket_show_page,display_main_page,display_store_register_page,display_confirmation_page
+from views.client_side import display_login_page ,display_register_page ,display_ticket_issue_page,display_ticket_show_page,display_main_page,display_store_register_page,display_confirmation_page
 import streamlit as st
 import pandas as pd
 
-import sqlite3
-import hashlib
+
 
 
 
