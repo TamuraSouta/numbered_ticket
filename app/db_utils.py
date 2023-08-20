@@ -144,5 +144,11 @@ def check_store_id_exists(store_id):
         result = cur.fetchone()
         return True if result else False
 
-
+# 整理券情報の取得
+def fetch_ticket_info(store_id):
+    with sqlite3.connect('users.db') as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, num_people FROM tickets WHERE store_id = ?", (store_id,))
+        tickets = cur.fetchall()
+        return tickets
 

@@ -1,6 +1,6 @@
 from db_utils import init_db,check_store_exists
 from views.client_side import display_login_page as client_login_page  ,display_register_page ,display_ticket_issue_page,display_ticket_show_page,display_main_page,display_confirmation_page
-from views.store_side import display_login_page as store_login_page , display_store_register_page,display_store_dashboard_page
+from views.store_side import display_login_page as store_login_page , display_store_register_page,display_store_main_page,display_ticket_control_page
 import streamlit as st
 import pandas as pd
 
@@ -47,8 +47,10 @@ def main():
             store_login_page()
         elif st.session_state.page == "store_registration":
             display_store_register_page()
-        elif st.session_state.page == "store_dashboard":
-            display_store_dashboard_page()
+        elif st.session_state.page == "store_main":
+            display_store_main_page()
+        elif st.session_state.page == "ticket_control":
+            display_ticket_control_page()
 
 if __name__ == "__main__":
     main()

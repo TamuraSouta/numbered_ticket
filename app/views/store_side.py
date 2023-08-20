@@ -1,5 +1,6 @@
 import streamlit as st
-from db_utils import authenticate_store,register_store,check_store_exists
+import pandas as pd
+from db_utils import authenticate_store,register_store,check_store_exists,get_store_info,fetch_ticket_info
 from config import ADMIN_ID,ADMIN_PASSWORD
 
 
@@ -15,7 +16,8 @@ def display_login_page():
             st.session_state.page = 'store_registration'
             st.experimental_rerun()
         elif authenticate_store(store_id, password):
-            st.session_state.page = 'store_dashboard'
+            st.session_state.store_id = store_id
+            st.session_state.page = 'store_main'
             st.experimental_rerun() 
         else:
             st.warning("認証に失敗しました。もう一度試してください。")
@@ -52,7 +54,37 @@ def display_store_register_page():
             st.session_state.page = 'login'
             st.experimental_rerun() 
 
-def display_store_dashboard_page():
-    if st.button("戻る"):
-            st.session_state.page = 'login'
-            st.experimental_rerun() 
+# メイン画面
+def display_store_main_page():
+    st.subheader("お店のメイン画面")
+    
+    # お店の情報を取得する
+    store_info = get_store_info(st.session_state.store_id)
+    if store_info:
+        st.write(f"お店の名前: {store_info[0]}")  # お店の名前を表示
+    
+    # 整理券制御ページに遷移するボタン
+    if st.button("整理券の制御"):
+        st.session_state.page = 'ticket_control'
+        st.experimental_rerun()
+
+# 整理券制御ページ
+def display_ticket_control_page():
+    # 整理券情報を取得
+    tickets = fetch_ticket_info(st.session_state.store_id)
+
+    # 整理券情報をDataFrameに変換
+    df = pd.DataFrame(tickets, columns=['整理券番号', 'ユーザー名', '人数'])
+
+    # DataFrameを表示
+    st.table(df)
+
+    # 呼び出しボタンの表示と処理
+    selected_ticket = st.selectbox("整理券を選択してください", df['整理券番号'].tolist())
+    if st.button("呼び出し"):
+        st.success(f"{selected_ticket}番のお客様を呼び出しました。")
+        
+    if st.button("メインページに戻る"):
+        st.session_state.page = 'store_main'
+        st.experimental_rerun()
+

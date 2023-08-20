@@ -176,7 +176,7 @@ def display_ticket_show_page():
             response = requests.get(GSI_API_BASE_URL + s_quote)
             coordinates = response.json()[0]["geometry"]["coordinates"]
             data = pd.DataFrame({ 
-                'lat': [coordinates[1]],  # 緯度と経度の順番を修正
+                'lat': [coordinates[1]],  
                 'lon': [coordinates[0]]
             }, index=[1])
             # データを使用して地図を作成する
