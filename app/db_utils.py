@@ -74,11 +74,12 @@ def issue_ticket(username, num_people, store_id):
         return ticket_id[0], num_people 
     
 # 整理券情報の取得
-def get_previous_ticket(username, store_id):
+def get_previous_ticket(username):
     with sqlite3.connect('users.db') as conn:
         cur = conn.cursor()
-        cur.execute("SELECT id, num_people, store_id FROM tickets WHERE username = ? AND store_id = ? ORDER BY id DESC LIMIT 1", 
-                    (username, store_id))
+        # store_idを条件から取り除くことで、そのユーザーの最新の整理券を取得します
+        cur.execute("SELECT id, num_people, store_id FROM tickets WHERE username = ? ORDER BY id DESC LIMIT 1", 
+                    (username,))
         ticket_info = cur.fetchone()
         return ticket_info
 

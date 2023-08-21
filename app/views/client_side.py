@@ -15,7 +15,8 @@ def display_login_page():
     params = st.experimental_get_query_params()
     store_id = params.get("store_id", [None])[0]
     if check_store_exists(store_id):
-        st.session_state.OPEN_STATUS = True # 整理券を取得できる
+        st.session_state.store_id = store_id 
+        st.session_state.OPEN_STATUS = True 
     else:
         st.warning("このurlでは整理券を発行することはできません")
     
@@ -109,14 +110,18 @@ def display_confirmation_page():
 #メイン画面
 def display_main_page():
     st.subheader("メイン画面")
+    
+    # OPEN_STATUS の初期化
+    if 'OPEN_STATUS' not in st.session_state:
+        st.session_state.OPEN_STATUS = False
+
     if 'error_message' in st.session_state and st.session_state.error_message:
         st.error(st.session_state.error_message)
         del st.session_state.error_message  
 
-    
     store_info = get_store_info(st.session_state.store_id)
     if store_info:
-        st.write(f"お店の名前: {store_info[0]}")  # お店の名前を表示
+        st.write(f"お店の名前: {store_info[0]}")  
     if st.button("発行番号の確認"):
         st.session_state.page = 'show_ticket'
         st.experimental_rerun()
@@ -128,7 +133,6 @@ def display_main_page():
 #発行券発行画面
 def display_ticket_issue_page():
     st.subheader("整理券発行")
-
 
     num_people = st.number_input("人数を入力してください", min_value=1, max_value=100, value=1)
     if st.button("整理券を発行"):
@@ -157,21 +161,21 @@ def display_ticket_issue_page():
 #発行券確認画面 
 def display_ticket_show_page():
     st.subheader("発行された整理券の情報")
-    ticket_info = get_previous_ticket(st.session_state.username, st.session_state.store_id)  # store_idを追加
+    ticket_info = get_previous_ticket(st.session_state.username)
     if ticket_info:
+        if ticket_info[2] != st.session_state.store_id:
+            st.warning("このお店の整理券ではありません")
 
         st.write(f"整理券番号: {ticket_info[0]}")
         st.write(f"人数: {ticket_info[1]}")
         
         # 店の情報を表示
-        store_info = get_store_info(ticket_info[2])
+        store_info = get_store_info(ticket_info[2]) 
         if store_info:
             phone_number = store_info[1]
             address = store_info[2]
             st.write(f"電話番号: {phone_number}")
             st.write(f"住所: {address}")
-            
-
             s_quote = urllib.parse.quote(address)
             response = requests.get(GSI_API_BASE_URL + s_quote)
             coordinates = response.json()[0]["geometry"]["coordinates"]
