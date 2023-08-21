@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from db_utils import authenticate_store,register_store,check_store_exists,get_store_info,fetch_ticket_info
+from db_utils import authenticate_store,register_store,check_store_exists,get_store_info,fetch_ticket_info,delete_ticket
 from config import ADMIN_ID,ADMIN_PASSWORD
 
 
@@ -83,6 +83,12 @@ def display_ticket_control_page():
     selected_ticket = st.selectbox("整理券を選択してください", df['整理券番号'].tolist())
     if st.button("呼び出し"):
         st.success(f"{selected_ticket}番のお客様を呼び出しました。")
+
+        # 呼び出した整理券をデータベースから削除
+        delete_ticket(selected_ticket)
+        st.experimental_rerun() 
+
+        
         
     if st.button("メインページに戻る"):
         st.session_state.page = 'store_main'

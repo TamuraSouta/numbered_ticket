@@ -152,3 +152,8 @@ def fetch_ticket_info(store_id):
         tickets = cur.fetchall()
         return tickets
 
+# 整理券番号の削除
+def delete_ticket(ticket_id):
+    with sqlite3.connect('users.db') as conn:
+        conn.execute("DELETE FROM tickets WHERE id = ?", (ticket_id,))
+        conn.commit()
