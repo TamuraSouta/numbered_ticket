@@ -108,20 +108,16 @@ def display_main_page():
     if 'OPEN_STATUS' not in st.session_state:
         st.session_state.OPEN_STATUS = False
 
-    if 'error_message' in st.session_state and st.session_state.error_message:
-        st.error(st.session_state.error_message)
-        del st.session_state.error_message  
+    display_error_if_exists()
 
     store_info = get_store_info(st.session_state.store_id)
     if store_info:
         st.write(f"お店の名前: {store_info[0]}")  
     if st.button("発行番号の確認"):
         go_to_page('show_ticket')
-        st.experimental_rerun()
     if st.session_state.OPEN_STATUS:
         if st.button("新規発行"):
             go_to_page('issue_ticket')
-            st.experimental_rerun()
 
 #発行券発行画面
 def display_ticket_issue_page():
