@@ -40,12 +40,24 @@ def init_db():
 # 客側
 ##################################
 
+# ユーザーが既に存在するかチェック
+def user_exists(username):
+    with sqlite3.connect('users.db') as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users WHERE username = ?", (username,))
+        user = cur.fetchone()
+        return user is not None
+
 # ユーザーの追加
-def add_user(username, password, gender, age, email):  
+def add_user(username, password, gender, age, email):
+    if user_exists(username):
+        return False
+    
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
     try:
         with sqlite3.connect('users.db') as conn:
-            conn.execute("INSERT INTO users (username, password, gender, age, email) VALUES (?, ?, ?, ?, ?)", (username, hashed_password, gender, age, email))
+            conn.execute("INSERT INTO users (username, password, gender, age, email) VALUES (?, ?, ?, ?, ?)", 
+                         (username, hashed_password, gender, age, email))
             conn.commit()
         return True
     except sqlite3.IntegrityError:

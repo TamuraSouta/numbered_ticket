@@ -3,52 +3,47 @@ import pandas as pd
 import requests
 import urllib 
 
-from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists,cancel_ticket,user_has_ticket
+from utils import go_to_page,display_error_if_exists,display_error_message
+from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists,cancel_ticket,user_has_ticket,user_exists
 from config import GSI_API_BASE_URL
 
 st.session_state.OPEN_STATUS = False
-
 
 #ログイン画面
 def display_login_page():
     # URLからstore_idを取得
     params = st.experimental_get_query_params()
     store_id = params.get("store_id", [None])[0]
+
     if check_store_exists(store_id):
         st.session_state.store_id = store_id 
         st.session_state.OPEN_STATUS = True 
     else:
+        st.session_state.store_id = None
         st.warning("このurlでは整理券を発行することはできません")
     
-    if 'error_message' in st.session_state and st.session_state.error_message:
-        st.error(st.session_state.error_message)
-        del st.session_state.error_message 
+    display_error_if_exists()
+
     st.subheader("ログイン")
     username = st.text_input("ユーザー名", key="client_username")
     password = st.text_input("パスワード", type='password')
     if st.button("ログイン"):
         if authenticate_user(username, password):
             st.session_state.username = username 
-            st.session_state.page = 'main' 
-            st.experimental_rerun()  
+            go_to_page('main' )
         else:
             st.warning("ユーザー名またはパスワードが間違っています。")
 
     # 新規登録画面に遷移
     if st.button("新規登録画面へ"):
-        st.session_state.page = 'register'
-        st.experimental_rerun()
+        go_to_page('register')
 
-if 'error_message' not in st.session_state:
-    st.session_state.error_message = ""
-    
+
 #新規登録画面
 def display_register_page():
     st.subheader("新規登録")
 
-    # セッション状態のエラーメッセージが初期化されていない場合は初期化します。
-    if 'error_message' not in st.session_state:
-        st.session_state.error_message = ""
+    display_error_if_exists()
     
     new_username = st.text_input("ユーザー名")
     new_password = st.text_input("パスワード", type='password')
@@ -59,11 +54,13 @@ def display_register_page():
     
     if st.button("登録"):
         if not new_username or not new_password or not email:
-            st.session_state.error_message = "すべての項目を入力してください。"
+            display_error_message( "すべての項目を入力してください。")
         elif new_password != confirm_password:
-            st.session_state.error_message = "パスワードが一致しません。"
+            display_error_message( "パスワードが一致しません。")
         elif "@" not in email:
-            st.session_state.error_message = "有効なメールアドレスを入力してください。"
+            display_error_message( "有効なメールアドレスを入力してください。")
+        elif user_exists(new_username):
+            display_error_message("そのユーザー名は既に存在します。")
         else:
             st.session_state.registration_info = {
                 "username": new_username,
@@ -72,12 +69,9 @@ def display_register_page():
                 "gender": gender,
                 "age": age
             }
-            st.session_state.page = 'confirmation'
-            st.session_state.error_message = ""
-            st.experimental_rerun()  
-        st.experimental_rerun()
-    if st.session_state.error_message:
-        st.warning(st.session_state.error_message)
+            go_to_page('confirmation')
+        display_error_if_exists()
+    
 
 # 内容確認ページ
 def display_confirmation_page():
@@ -97,13 +91,12 @@ def display_confirmation_page():
     
     if st.button("登録する"):
         if add_user(new_username,new_password,gender,age,email):
-            st.session_state.page = 'login'  
-            st.experimental_rerun() 
+            go_to_page('login')
         else:
-            st.warning("そのユーザー名は既に存在します。")
+            display_error_message("そのユーザー名は既に存在します。")
 
     if st.button("修正する"): 
-        st.session_state.page = 'register'
+        go_to_page('register')
         st.experimental_rerun()
 
         
@@ -123,11 +116,11 @@ def display_main_page():
     if store_info:
         st.write(f"お店の名前: {store_info[0]}")  
     if st.button("発行番号の確認"):
-        st.session_state.page = 'show_ticket'
+        go_to_page('show_ticket')
         st.experimental_rerun()
     if st.session_state.OPEN_STATUS:
         if st.button("新規発行"):
-            st.session_state.page = 'issue_ticket'
+            go_to_page('issue_ticket')
             st.experimental_rerun()
 
 #発行券発行画面
@@ -138,7 +131,7 @@ def display_ticket_issue_page():
     if st.button("整理券を発行"):
         if user_has_ticket(st.session_state.username):
             st.session_state.error_message = "すでに他の店舗で整理券を取得しています。1つのIDで複数店舗での整理券取得はできません。"
-            st.session_state.page = 'main'
+            go_to_page('main')
             st.experimental_rerun()
             return
         else:
@@ -149,11 +142,11 @@ def display_ticket_issue_page():
             if num_people > 100:
                 st.warning("人数は100までです。")
                 return
-            st.session_state.page = 'show_ticket'
+            go_to_page('show_ticket')
             st.experimental_rerun()
     
     if st.button("戻る"):
-        st.session_state.page = 'main'
+        go_to_page('main')
         st.experimental_rerun() 
 
 
@@ -189,15 +182,15 @@ def display_ticket_show_page():
             # キャンセル機能の実装
             if st.button("整理券のキャンセル"):
                 cancel_ticket(st.session_state.username, st.session_state.store_id)  # 整理券をキャンセル
-                st.session_state.page = 'main'
+                go_to_page('main')
                 st.experimental_rerun() 
             
             if st.button("戻る"):
-                st.session_state.page = 'main'
+                go_to_page('main')
                 st.experimental_rerun() 
     elif st.session_state.OPEN_STATUS :
         st.write("まだ整理券は発行されていまません。")
         if st.button("新規発行"):
-            st.session_state.page = 'issue_ticket'
+            go_to_page('issue_ticket')
             st.experimental_rerun()
 
