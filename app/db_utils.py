@@ -17,7 +17,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             num_people INTEGER,
-            store_id INTEGER
+            store_id INTEGER,
+            store_name TEXT
         )""")
         conn.execute("""
         CREATE TABLE IF NOT EXISTS stores (
@@ -75,22 +76,24 @@ def authenticate_user(username, password):
         else:
             return False
         
-#整理券発行関数
+# 整理券発行関数
 def issue_ticket(username, num_people, store_id):
+    store_name = get_store_info(store_id)[0]  # この関数で店名を取得
     with sqlite3.connect('users.db') as conn:
-        conn.execute("INSERT INTO tickets (username, num_people, store_id) VALUES (?, ?, ?)", (username, num_people, store_id))
+        conn.execute("INSERT INTO tickets (username, num_people, store_id, store_name) VALUES (?, ?, ?, ?)", 
+                     (username, num_people, store_id, store_name))
         conn.commit()
         cur = conn.cursor()
         cur.execute("SELECT id FROM tickets WHERE username = ? ORDER BY id DESC LIMIT 1", (username,))
         ticket_id = cur.fetchone()
         return ticket_id[0], num_people 
-    
+
 # 整理券情報の取得
 def get_previous_ticket(username):
     with sqlite3.connect('users.db') as conn:
         cur = conn.cursor()
-        # store_idを条件から取り除くことで、そのユーザーの最新の整理券を取得します
-        cur.execute("SELECT id, num_people, store_id FROM tickets WHERE username = ? ORDER BY id DESC LIMIT 1", 
+        # store_nameも取得するように修正
+        cur.execute("SELECT id, num_people, store_id, store_name FROM tickets WHERE username = ? ORDER BY id DESC LIMIT 1", 
                     (username,))
         ticket_info = cur.fetchone()
         return ticket_info
@@ -108,6 +111,15 @@ def user_has_ticket(username):
         cur.execute("SELECT * FROM tickets WHERE username = ?", (username,))
         result = cur.fetchone()
         return True if result else False
+
+# ユーザー内容修正
+def update_user_info(username, new_password, gender, age, email):
+    hashed_password = hashlib.sha256(new_password.encode()).hexdigest()
+    with sqlite3.connect('users.db') as conn:
+        conn.execute("""
+        UPDATE users SET password=?, gender=?, age=?, email=? WHERE username=?
+        """, (hashed_password, gender, age, email, username))
+        conn.commit()
 
 ##################################
 # 店側
@@ -170,3 +182,4 @@ def delete_ticket(ticket_id):
     with sqlite3.connect('users.db') as conn:
         conn.execute("DELETE FROM tickets WHERE id = ?", (ticket_id,))
         conn.commit()
+

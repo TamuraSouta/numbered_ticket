@@ -4,7 +4,7 @@ import requests
 import urllib 
 
 from utils import go_to_page,display_error_if_exists,display_error_message
-from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists,cancel_ticket,user_has_ticket,user_exists
+from db_utils import authenticate_user,add_user,get_store_info,issue_ticket,get_previous_ticket,check_store_exists,cancel_ticket,user_has_ticket,user_exists,update_user_info
 from config import GSI_API_BASE_URL
 
 st.session_state.OPEN_STATUS = False
@@ -71,7 +71,8 @@ def display_register_page():
             }
             go_to_page('confirmation')
         display_error_if_exists()
-    
+    if st.button("戻る"):
+        go_to_page('login')
 
 # 内容確認ページ
 def display_confirmation_page():
@@ -118,6 +119,8 @@ def display_main_page():
     if st.session_state.OPEN_STATUS:
         if st.button("新規発行"):
             go_to_page('issue_ticket')
+    if st.button("ユーザー情報を更新"):
+        go_to_page('update_user_info')
 
 #発行券発行画面
 def display_ticket_issue_page():
@@ -126,9 +129,8 @@ def display_ticket_issue_page():
     num_people = st.number_input("人数を入力してください", min_value=1, max_value=100, value=1)
     if st.button("整理券を発行"):
         if user_has_ticket(st.session_state.username):
-            st.session_state.error_message = "すでに他の店舗で整理券を取得しています。1つのIDで複数店舗での整理券取得はできません。"
+            st.session_state.error_message = "すでに他の店舗で整理券を取得しています。 整理券をご確認ください"
             go_to_page('main')
-            st.experimental_rerun()
             return
         else:
             ticket_num, issued_num_people = issue_ticket(st.session_state.username, num_people, st.session_state.store_id)  # store_idを渡す
@@ -145,8 +147,6 @@ def display_ticket_issue_page():
         go_to_page('main')
         st.experimental_rerun() 
 
-
-
 #発行券確認画面 
 def display_ticket_show_page():
     st.subheader("発行された整理券の情報")
@@ -156,6 +156,7 @@ def display_ticket_show_page():
             st.warning("このお店の整理券ではありません")
 
         st.write(f"整理券番号: {ticket_info[0]}")
+        st.write(f"店名: {ticket_info[3]}") 
         st.write(f"人数: {ticket_info[1]}")
         
         # 店の情報を表示
@@ -179,14 +180,33 @@ def display_ticket_show_page():
             if st.button("整理券のキャンセル"):
                 cancel_ticket(st.session_state.username, st.session_state.store_id)  # 整理券をキャンセル
                 go_to_page('main')
-                st.experimental_rerun() 
             
             if st.button("戻る"):
                 go_to_page('main')
-                st.experimental_rerun() 
+
     elif st.session_state.OPEN_STATUS :
         st.write("まだ整理券は発行されていまません。")
         if st.button("新規発行"):
             go_to_page('issue_ticket')
-            st.experimental_rerun()
+
+def display_user_info_update_page():
+    st.subheader("ユーザー情報の更新")
+    current_username = st.session_state.username
+    st.write("ユーザー名",current_username)
+
+    password = st.text_input("新しいパスワード", type='password')
+    confirm_password = st.text_input("新しいパスワード（再確認）", type='password')
+    gender = st.selectbox("性別", ["男性", "女性", "その他"])  
+    age = st.number_input("年齢", min_value=1, max_value=100)  
+    email = st.text_input("メールアドレス") 
+
+    if st.button("更新"):
+        if password != confirm_password:
+            st.warning("パスワードが一致しません。")
+        else:
+            update_user_info(current_username, password, gender, age, email)
+            st.success("ユーザー情報が更新されました。")
+
+    if st.button("戻る"):
+        go_to_page('main')
 
